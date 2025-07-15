@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	goa.design/clue v1.2.1
 	goa.design/goa/v3 v3.21.1
 )
@@ -21,6 +22,7 @@ require (
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/otel v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect

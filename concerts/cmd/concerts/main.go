@@ -12,6 +12,9 @@ import (
 	// Use gen prefix for generated packages
 	genconcerts "concerts/gen/concerts"
 	genconcertshttpserver "concerts/gen/http/concerts/server"
+
+    "github.com/vmihailenco/msgpack/v5"
+    "strings"
 )
 
 // ConcertsService implements the genconcerts.Service interface
@@ -21,7 +24,7 @@ type ConcertsService struct {
 
 // List upcoming concerts with optional pagination.
 func (m *ConcertsService) List(ctx context.Context, p *genconcerts.ListPayload) ([]*genconcerts.Concert, error) {
-    // implement pagination logic
+	// implement pagination logic
 	start := (p.Page - 1) * p.Limit
 	end := start + p.Limit
 	if end > len(m.concerts) {
@@ -88,6 +91,38 @@ func (m *ConcertsService) Delete(ctx context.Context, p *genconcerts.DeletePaylo
 	return genconcerts.MakeNotFound(fmt.Errorf("concert not found: %s", p.ConcertID))
 }
 
+type (
+    // MessagePack encoder implementation
+    msgpackEnc struct {
+        w http.ResponseWriter
+    }
+
+    // MessagePack decoder implementation
+    msgpackDec struct {
+        r *http.Request
+    }
+)
+
+// Custom encoder constructor - this creates our MessagePack encoder
+func msgpackEncoder(ctx context.Context, w http.ResponseWriter) goahttp.Encoder {
+    return &msgpackEnc{w: w}
+}
+
+func (e *msgpackEnc) Encode(v any) error {
+    e.w.Header().Set("Content-Type", "application/msgpack")
+    return msgpack.NewEncoder(e.w).Encode(v)
+}
+
+// Custom decoder constructor - this handles incoming MessagePack data
+func msgpackDecoder(r *http.Request) goahttp.Decoder {
+    return &msgpackDec{r: r}
+}
+
+func (d *msgpackDec) Decode(v any) error {
+    return msgpack.NewDecoder(d.r.Body).Decode(v)
+}
+
+
 // main instantiates the service and starts the HTTP server.
 func main() {
 	// Instantiate the service
@@ -98,9 +133,47 @@ func main() {
 
 	// Build an HTTP handler
 	mux := goahttp.NewMuxer() // Uses Goa’s built-in HTTP multiplexer
-	requestDecoder := goahttp.RequestDecoder
-	responseEncoder := goahttp.ResponseEncoder
-	handler := genconcertshttpserver.New(endpoints, mux, requestDecoder, responseEncoder, nil, nil)
+	// handler := genconcertshttpserver.New(endpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, nil, nil)
+
+
+    // Smart encoder selection based on what the client wants (Accept header)
+    encodeFunc := func(ctx context.Context, w http.ResponseWriter) goahttp.Encoder {
+        accept := ctx.Value(goahttp.AcceptTypeKey).(string)
+        
+        // Parse Accept header which may contain multiple types with q-values
+        // For example: "application/json;q=0.9,application/msgpack"
+        types := strings.Split(accept, ",")
+        for _, t := range types {
+            mt := strings.TrimSpace(strings.Split(t, ";")[0])
+            switch mt {
+            case "application/msgpack":
+                return msgpackEncoder(ctx, w)
+            case "application/json", "*/*":
+                return goahttp.ResponseEncoder(ctx, w)
+            }
+        }
+        
+        // When in doubt, JSON is our friend!
+        return goahttp.ResponseEncoder(ctx, w)
+    }
+
+    // Smart decoder selection based on what the client is sending (Content-Type)
+    decodeFunc := func(r *http.Request) goahttp.Decoder {
+        if r.Header.Get("Content-Type") == "application/msgpack" {
+            return msgpackDecoder(r)
+        }
+        return goahttp.RequestDecoder(r)
+    }
+
+    // Wire up our custom encoder/decoder
+    handler := genconcertshttpserver.New(
+        endpoints,
+        mux,
+        decodeFunc,
+        encodeFunc,
+        nil,
+        nil,
+    )
 
 	// Logs all mounted routes for debugging
 	genconcertshttpserver.Mount(mux, handler)
@@ -119,4 +192,5 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
+
 }
