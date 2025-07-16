@@ -91,6 +91,8 @@ func (m *ConcertsService) Delete(ctx context.Context, p *genconcerts.DeletePaylo
 	return genconcerts.MakeNotFound(fmt.Errorf("concert not found: %s", p.ConcertID))
 }
 
+
+// MessagePack/Protocol Buffers: Recommended for service-to-service communication where performance is critical
 type (
     // MessagePack encoder implementation
     msgpackEnc struct {

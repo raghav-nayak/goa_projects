@@ -1,0 +1,28 @@
+// Code generated with goa v3.21.1, DO NOT EDIT.
+//
+// greeter protocol buffer definition
+//
+// Command:
+// $ goa gen grpcgreeter/design
+
+syntax = "proto3";
+
+package greeter;
+
+option go_package = "/greeterpb";
+
+// A simple gRPC service that says hello.
+service Greeter {
+	// Send a greeting to a user
+	rpc SayHello (SayHelloRequest) returns (SayHelloResponse);
+}
+
+message SayHelloRequest {
+	// Name of the user to greet
+	string name = 1;
+}
+
+message SayHelloResponse {
+	// A friendly greeting message
+	string greeting = 1;
+}
