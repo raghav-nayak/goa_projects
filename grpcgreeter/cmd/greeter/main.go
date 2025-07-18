@@ -1,4 +1,4 @@
-package greeter
+package main
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"log"
+    "fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -29,7 +30,8 @@ func loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 	return handler(ctx, req) // Call the handler to process the request and return the response or error
 }
 
-func main() {
+func main(){
+    fmt.Print("Starting gRPC server...\n")
 	// create a TCP listener for incoming gRPC requests
 	// this is where the gRPC server will listen for incoming requests
 	listener, err := net.Listen("tcp", ":8090")
