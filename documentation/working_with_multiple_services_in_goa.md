@@ -71,3 +71,78 @@ choice of transport protocol significantly impacts how services interact
 <br>
 
 
+```
+myapi/
+├── README.md          # Overall system overview, setup guide and architecture overview
+├── design/            # Shared design elements across all services
+│   ├── design.go      # Top-level design for unified approach using Goa's DSL for a unified approach
+│   └── types/         # Shared type definitions defined with Meta("struct:pkg:path")
+├── gen/               # Generated code (unified design approach)
+│   ├── http/          # HTTP transport layer code
+│   ├── grpc/          # gRPC transport layer code
+│   └── types/         # Generated shared types
+├── scripts/           # Automation scripts for common development and deployment tasks for both approaches
+└── services/          # Individual service implementations
+    ├── users/         # Example: User service; each follows the consistent structure
+    │   ├── cmd/       # Service entry points and executables
+    │   ├── design/    # Service-specific API design
+    │   ├── gen/       # Service-specific Generated code (independent design approach)
+    │   ├── users.go   # Business logic implementation
+    │   └── README.md  # Service-specific documentation
+    └── products/      # Example: Product service
+        └── ...
+```
+
+The above structure supports both monolithic and microservice deployments, allowing
+- clear separation of concerns
+- shared types and design elements
+- independent service evolution
+- easy service discovery and navigation
+
+<br>
+
+## Service communication patterns
+A common architecture pattern is to have 
+- a few services(sometimes only one) -> exposes application platform's capabilities to external clients
+- with multiple back services handling the actual business logic 
+
+### Front services
+- public-facing services
+- use HTTP as transport for broad client compatibility
+- Focus on orchestrating requests to back services
+- handle authentication and authorization of external requests
+- initiate observability contexts(traces, metrics)
+- define broad APIs with shallow implementations
+
+### Back services
+- internal services
+- often use gRPC for performance benefits
+- implement core business logic
+- may use private identity mechanisms (e.g. spiffe)
+- contribute to existing observability contexts
+- define focused APIs with deep implementations
+
+
+## Scripts
+### Unified design approach
+- single command generates all service code
+- centralized testing across services
+- coordinated builds and deployments
+- shared dependency management 
+
+### Independent design approach
+- per-service code generation
+- isolated testing envs
+- independent build processes
+- service-specific deployments
+
+<br>
+
+## Service implementation
+- each service runs as a separate executable -> promoting isolation and independent scaling
+
+## Best practices
+1. Choose appropriate transport: Use HTTP for external and gRPC for internal
+2. Plan for evolution: version the services and plan for backward compatibility
+3. Implement robust error handling: Define clear error types and handle cross service failure gracefully
+4. Document service interactions: Maintain clear documentation of service APIs and dependencies
