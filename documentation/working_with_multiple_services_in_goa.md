@@ -70,7 +70,9 @@ choice of transport protocol significantly impacts how services interact
 
 <br>
 
-
+## Repository structure
+- a well-organized repo helps teams to navigate and maintain the codebase effectively.
+- a unified structure also makes it easier for developers to move between systems and services.
 ```
 myapi/
 ├── README.md          # Overall system overview, setup guide and architecture overview
